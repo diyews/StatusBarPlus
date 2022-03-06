@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Status Bar+</string>
+    <string name="turn_on_service">Turn on</string>
+    <string name="running">Running</string>
+    <string name="preview_status_bar">Preview</string>
+    <string name="accessibility_service_label">Status Bar+ Service</string>
+    <string name="accessibility_service_description">Status Bar+ Service\nUse service to create an overlay over status bar to detect touch gesture, then perform actions like lock screen</string>
+    <string name="total_installed_apps">Installed apps</string>
+    <string name="image_app_icon">App icon</string>
+    <string name="left">Left</string>
+    <string name="center">Center</string>
+    <string name="right">Right</string>
+    <string name="search">Search</string>
+</resources>
