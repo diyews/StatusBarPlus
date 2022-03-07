@@ -1,4 +1,4 @@
-# Status Bar+
+# Status Bar+ ![xx](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 
 To detect status bar touch gesture by create an overlay over native status bar. Like [Super Status Bar](https://play.google.com/store/apps/details?id=com.tombayley.statusbar)
 
