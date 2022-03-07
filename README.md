@@ -10,3 +10,7 @@ To detect status bar touch gesture by create an overlay over native status bar. 
 
 ## License
 Only [COMMERCIAL USE] is not welcomed.
+
+
+## Preview
+![statusbarplus](https://user-images.githubusercontent.com/35769340/157036325-a0921100-a7d5-4fed-9401-4569dde0d398.gif)
