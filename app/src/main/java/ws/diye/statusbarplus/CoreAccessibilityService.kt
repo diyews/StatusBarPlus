@@ -70,6 +70,7 @@ class CoreAccessibilityService : AccessibilityService() {
 
         val wm = windowManager
         wm.addView(mLayout, lp)
+        setupFollowStatusBarVisibilityListener(lp)
 
         /* listen data from activity or self to update status bar */
         dataFromActivityManager.subscribe(object : DataFromActivityListener {
@@ -190,6 +191,40 @@ class CoreAccessibilityService : AccessibilityService() {
             val displayMetrics = DisplayMetrics()
             wm.defaultDisplay.getRealMetrics(displayMetrics)
             displayMetrics.widthPixels
+        }
+    }
+
+    private fun setupFollowStatusBarVisibilityListener(lp: WindowManager.LayoutParams) {
+        val wm = windowManager
+        val mLayout = mLayout!!
+
+        fun updateOverlayTouchable(touchable: Boolean): Boolean {
+            val hasFlagNotTouchable = lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0
+
+            if (touchable && hasFlagNotTouchable) {
+                wm.updateViewLayout(
+                    mLayout,
+                    lp.apply { flags = flags xor WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE })
+            } else if (!touchable && !hasFlagNotTouchable) {
+                wm.updateViewLayout(
+                    mLayout,
+                    lp.apply { flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE })
+            }
+            return true
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            mLayout.setOnApplyWindowInsetsListener { _, windowInsets ->
+                val isStatusBarVisible = windowInsets.isVisible(WindowInsets.Type.statusBars())
+                updateOverlayTouchable(isStatusBarVisible)
+                windowInsets
+            }
+        } else {
+            mLayout.setOnSystemUiVisibilityChangeListener {
+                    visibility ->
+                val isFullscreen = visibility and View.SYSTEM_UI_FLAG_FULLSCREEN != 0
+                updateOverlayTouchable(!isFullscreen)
+            }
         }
     }
 
