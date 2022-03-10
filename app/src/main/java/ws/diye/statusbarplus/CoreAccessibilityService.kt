@@ -3,10 +3,13 @@ package ws.diye.statusbarplus
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.graphics.Color
 import android.view.accessibility.AccessibilityEvent
 
 import android.graphics.PixelFormat
+import android.os.Build
+import android.util.DisplayMetrics
 import android.view.*
 
 import android.widget.FrameLayout
@@ -17,11 +20,13 @@ import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.preference.PreferenceManager
+import java.lang.UnsupportedOperationException
 
 
 class CoreAccessibilityService : AccessibilityService() {
     var mLayout: FrameLayout? = null
     private val touchGestureDetect = TouchGestureDetect()
+    private lateinit var windowManager: WindowManager
     private var sharedPreferences: SharedPreferences? = null
 
     @SuppressLint("ClickableViewAccessibility")
@@ -29,30 +34,95 @@ class CoreAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         var statusBarHeight = 0
-        val screenWidth: Int
         val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
         if (resourceId > 0) {
             statusBarHeight = resources.getDimensionPixelSize(resourceId)
         }
 
-        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
-
-        screenWidth = wm.defaultDisplay.width
         val mGestureTap = GestureDetector(applicationContext, object : SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent?): Boolean {
-                performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+                }
                 return true
             }
         })
 
         mLayout = FrameLayout(this)
-        mLayout!!.setOnTouchListener { _, motionEvent ->
+        mLayout!!.setOnTouchListener(onTouchHandler(mGestureTap))
+
+        val lp = WindowManager.LayoutParams()
+        lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+        lp.format = PixelFormat.TRANSLUCENT
+        lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+        lp.width = (getWidthOfWindowOrDisplay() * sharedPreferences!!.getInt("width", 40) / 100F).toInt()
+        lp.height = statusBarHeight
+        when (sharedPreferences!!.getString("gravity", "top_start")) {
+            "top_start" -> lp.gravity = Gravity.TOP or Gravity.START
+            "top_center" -> lp.gravity = Gravity.TOP or Gravity.CENTER
+            "top_end" -> lp.gravity = Gravity.TOP or Gravity.END
+        }
+
+        val inflater = LayoutInflater.from(this)
+        val statusBarView = inflater.inflate(R.layout.status_bar, mLayout)
+
+        val wm = windowManager
+        wm.addView(mLayout, lp)
+
+        /* listen data from activity or self to update status bar */
+        dataFromActivityManager.subscribe(object : DataFromActivityListener {
+            override fun onUpdate(payload: DataFromActivityManager.Payload) {
+                when (payload.type) {
+                    "gravity" -> {
+                        when (payload.value) {
+                            -1 -> lp.gravity = Gravity.START or Gravity.TOP
+                            0 -> lp.gravity = Gravity.CENTER or Gravity.TOP
+                            1 -> lp.gravity = Gravity.END or Gravity.TOP
+                        }
+                        wm.updateViewLayout(mLayout, lp)
+                    }
+                    "preview", "background" -> {
+                        val layout = statusBarView.findViewById<ConstraintLayout>(R.id.status_bar_layout)
+                        if (payload.value == 1) {
+                            layout.setBackgroundColor(Color.parseColor("#D37878"))
+                        } else {
+                            layout.setBackgroundColor(0)
+                        }
+                    }
+                    "width" -> {
+                        /* -1 means update width because of orientation changed */
+                        val width = payload.value.takeIf { it != -1 } ?: sharedPreferences!!.getInt("width", 40)
+                        lp.width = (getWidthOfWindowOrDisplay() * (width / 100F)).toInt()
+                        wm.updateViewLayout(mLayout, lp)
+                    }
+                }
+            }
+        })
+    }
+
+    override fun onAccessibilityEvent(accessibilityEvent: AccessibilityEvent?) {
+    }
+
+    override fun onInterrupt() {
+        dataFromActivityManager.unsubscribe(null)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        dataFromActivityManager.sendData(DataFromActivityManager.Payload("width", -1))
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun onTouchHandler(mGestureTap: GestureDetector): View.OnTouchListener {
+        return View.OnTouchListener { _, motionEvent ->
             mGestureTap.onTouchEvent(motionEvent)
             when (motionEvent.action) {
                 MotionEvent.ACTION_DOWN -> touchGestureDetect.reset(motionEvent.x, motionEvent.y)
                 MotionEvent.ACTION_MOVE -> {
-                    if (touchGestureDetect.processed) return@setOnTouchListener false
+                    if (touchGestureDetect.processed) return@OnTouchListener false
                     touchGestureDetect.updateMove(motionEvent)
 
                     if (abs(touchGestureDetect.offsetX) >= 68 || abs(touchGestureDetect.offsetY) >= 68) {
@@ -98,59 +168,29 @@ class CoreAccessibilityService : AccessibilityService() {
             }
             true
         }
+    }
 
-        val lp = WindowManager.LayoutParams()
-        lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-        lp.format = PixelFormat.TRANSLUCENT
-        lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
-        lp.width = (screenWidth * sharedPreferences!!.getInt("width", 40) / 100F).toInt()
-        lp.height = statusBarHeight
-        when (sharedPreferences!!.getString("gravity", "top_start")) {
-            "top_start" -> lp.gravity = Gravity.TOP or Gravity.START
-            "top_center" -> lp.gravity = Gravity.TOP or Gravity.CENTER
-            "top_end" -> lp.gravity = Gravity.TOP or Gravity.END
-        }
-
-        val inflater = LayoutInflater.from(this)
-        val statusBarView = inflater.inflate(R.layout.status_bar, mLayout)
-
-        wm.addView(mLayout, lp)
-
-        /* listen data from activity to update status bar */
-        dataFromActivityManager.subscribe(object : DataFromActivityListener {
-            override fun onUpdate(payload: DataFromActivityManager.Payload) {
-                when (payload.type) {
-                    "gravity" -> {
-                        when (payload.value) {
-                            -1 -> lp.gravity = Gravity.START or Gravity.TOP
-                            0 -> lp.gravity = Gravity.CENTER or Gravity.TOP
-                            1 -> lp.gravity = Gravity.END or Gravity.TOP
-                        }
-                        wm.updateViewLayout(mLayout, lp)
-                    }
-                    "preview", "background" -> {
-                        val layout = statusBarView.findViewById<ConstraintLayout>(R.id.status_bar_layout)
-                        if (payload.value == 1) {
-                            layout.setBackgroundColor(Color.parseColor("#D37878"))
-                        } else {
-                            layout.setBackgroundColor(0)
-                        }
-                    }
-                    "width" -> {
-                        lp.width = (screenWidth * (payload.value) / 100F).toInt()
-                        wm.updateViewLayout(mLayout, lp)
-                    }
+    private fun getWidthOfWindowOrDisplay(): Int {
+        val wm = windowManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            var width = 0
+            val right = wm.currentWindowMetrics.bounds.right
+            try {
+                width = display?.mode?.physicalWidth ?: 0
+                if (width != 0 && width != right) {
+                    width = display!!.mode!!.physicalHeight
                 }
+            } catch (e: UnsupportedOperationException) {
             }
-        })
-    }
-
-    override fun onAccessibilityEvent(accessibilityEvent: AccessibilityEvent?) {
-    }
-
-    override fun onInterrupt() {
-        dataFromActivityManager.unsubscribe(null)
-        sharedPreferences = null
+            if (width == 0) {
+                width = right
+            }
+            width
+        } else {
+            val displayMetrics = DisplayMetrics()
+            wm.defaultDisplay.getRealMetrics(displayMetrics)
+            displayMetrics.widthPixels
+        }
     }
 
     companion object {

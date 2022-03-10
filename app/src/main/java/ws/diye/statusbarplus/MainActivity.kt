@@ -6,12 +6,10 @@ import android.os.Bundle
 
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Rect
 import android.provider.Settings
 
 import android.provider.Settings.SettingNotFoundException
 import android.text.TextUtils.SimpleStringSplitter
-import android.view.Window
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.RadioGroup
@@ -153,13 +151,6 @@ class MainActivity : AppCompatActivity() {
             println("***ACCESSIBILITY IS DISABLED***")
         }
         return false
-    }
-
-    fun getStatusBarHeight() {
-        val rectangle = Rect()
-        val window: Window = window
-        window.decorView.getWindowVisibleDisplayFrame(rectangle)
-        val statusBarHeight: Int = rectangle.top
     }
 
     private fun sendDataToService(type: String, value: Int) {
