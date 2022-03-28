@@ -20,7 +20,9 @@ import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.preference.PreferenceManager
+import com.google.gson.Gson
 import java.lang.UnsupportedOperationException
+import kotlin.system.measureTimeMillis
 
 
 class CoreAccessibilityService : AccessibilityService() {
@@ -28,6 +30,7 @@ class CoreAccessibilityService : AccessibilityService() {
     private val touchGestureDetect = TouchGestureDetect()
     private lateinit var windowManager: WindowManager
     private var sharedPreferences: SharedPreferences? = null
+    private val gson = Gson()
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onServiceConnected() {
@@ -140,21 +143,21 @@ class CoreAccessibilityService : AccessibilityService() {
                             /* left-bottom or right-bottom */
                             gradientAbs < judgeGradient && gradientAbs > reciprocalJudgeGradient -> {
                                 if (gradientSign == -1F) {
-                                    /* left */
-                                    println("left-bottom")
+                                    /* left-bottom */
+                                    executeSwipeAction("left_bottom")
                                 } else {
-                                    /* right */
-                                    println("right-bottom")
+                                    /* right-bottom */
+                                    executeSwipeAction("right_bottom")
                                 }
                             }
                             /* left or right */
                             gradientAbs <= reciprocalJudgeGradient -> {
                                 if (gradientSign == -1F) {
                                     /* left */
-                                    println("left")
+                                    executeSwipeAction("left")
                                 } else {
                                     /* right */
-                                    println("right")
+                                    executeSwipeAction("right")
                                 }
                             }
                             else -> {}
@@ -169,6 +172,28 @@ class CoreAccessibilityService : AccessibilityService() {
             }
             true
         }
+    }
+
+    private fun executeSwipeAction(direction: String) {
+        sharedPreferences!!.getString("action_type_$direction", null)
+            .let {
+                if (it != null) {
+                    val actionData = gson.fromJson(it, ActionData::class.java)
+                    when (actionData.type) {
+                        ActionExecuteType.ACTION -> {
+                            performGlobalAction(actionData.actionValue)
+                        }
+                        ActionExecuteType.APP -> {
+                            val intent =
+                                applicationContext.packageManager.getLaunchIntentForPackage(actionData.packageId)
+                            if (intent != null) {
+                                applicationContext.startActivity(intent)
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            }
     }
 
     private fun getWidthOfWindowOrDisplay(): Int {

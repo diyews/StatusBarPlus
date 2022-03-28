@@ -1,0 +1,10 @@
+<resources>
+    <declare-styleable name="ActionCardView">
+        <attr name="actionType" format="enum">
+            <enum name="left" value="0" />
+            <enum name="right" value="1" />
+            <enum name="left_bottom" value="2" />
+            <enum name="right_bottom" value="3" />
+        </attr>
+    </declare-styleable>
+</resources>

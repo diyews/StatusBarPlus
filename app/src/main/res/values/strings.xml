@@ -10,5 +10,9 @@
     <string name="left">Left</string>
     <string name="center">Center</string>
     <string name="right">Right</string>
+    <string name="swipe_left">Left</string>
+    <string name="swipe_right">Right</string>
+    <string name="swipe_left_bottom">Left-Bottom</string>
+    <string name="swipe_right_bottom">Right-Bottom</string>
     <string name="search">Search</string>
 </resources>

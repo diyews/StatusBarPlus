@@ -3,7 +3,6 @@ package ws.diye.statusbarplus
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -26,6 +25,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
+import com.google.gson.Gson
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -132,7 +134,7 @@ class AllInstalledAppActivity : AppCompatActivity() {
     }
 }
 
-class AppModel(private var name:String, private var icon: Drawable, private var packages:String) {
+private class AppModel(private var name:String, private var icon: Drawable, private var packages:String) {
     fun getName(): String {
         return name
     }
@@ -146,7 +148,7 @@ class AppModel(private var name:String, private var icon: Drawable, private var 
     }
 }
 
-class AppAdapter(private val context: Context, private var appModelList: ArrayList<AppModel>) :
+private class AppAdapter(private val context: AllInstalledAppActivity, private var appModelList: ArrayList<AppModel>) :
     RecyclerView.Adapter<AppAdapter.ViewHolder>() {
 
 
@@ -169,7 +171,7 @@ class AppAdapter(private val context: Context, private var appModelList: ArrayLi
         holder.appPackageNameTxt.text = appModelList[position].getPackages()
 
         holder.itemView.setOnClickListener {
-            val dialogListTitle = arrayOf("Open App", "App Info")
+            val dialogListTitle = arrayOf("Set to open", "App Info")
             val builder: AlertDialog.Builder = AlertDialog.Builder(context)
             builder.setTitle("Choose Action")
                 .setItems(
@@ -180,7 +182,32 @@ class AppAdapter(private val context: Context, private var appModelList: ArrayLi
                             val intent =
                                 context.packageManager.getLaunchIntentForPackage(appModelList[position].getPackages())
                             if (intent != null) {
-                                context.startActivity(intent)
+                                context.intent.extras?.getString("action_type_preference_key")
+                                    .also { preferenceKey ->
+                                        if (preferenceKey == null) return@also
+
+                                        val gson = Gson()
+                                        val sharedPreferences =
+                                            PreferenceManager.getDefaultSharedPreferences(context)
+
+                                        val actionData: ActionData = sharedPreferences.getString(preferenceKey, null)
+                                            .let { jsonStr ->
+                                                if (jsonStr ==null) return@let ActionData(lastModifiedTimeMs = System.currentTimeMillis())
+                                                else return@let gson.fromJson(jsonStr, ActionData::class.java)
+                                            }
+
+                                        actionData.apply {
+                                            type = ActionExecuteType.APP
+                                            packageId = appModelList[position].getPackages()
+                                            lastModifiedTimeMs = System.currentTimeMillis()
+                                        }
+
+                                        sharedPreferences.edit {
+                                            putString(preferenceKey, gson.toJson(actionData))
+                                        }
+
+                                        context.finish()
+                                    }
                             }else{
                                 Toast.makeText(context,"System app is not open for any reason.",Toast.LENGTH_LONG).show()
                             }

@@ -25,8 +25,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        val intent = Intent(this, AllInstalledAppActivity::class.java)
-
         setupSharedPreferences()
         setupWidgetListeners()
     }
