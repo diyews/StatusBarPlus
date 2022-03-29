@@ -28,11 +28,11 @@ import java.lang.UnsupportedOperationException
 
 
 class CoreAccessibilityService : AccessibilityService() {
-    var mLayout: FrameLayout? = null
+    private val gson = Gson()
+    private lateinit var sharedPreferences: SharedPreferences
     private val touchGestureDetect = TouchGestureDetect()
     private lateinit var windowManager: WindowManager
-    private var sharedPreferences: SharedPreferences? = null
-    private val gson = Gson()
+    lateinit var mLayout: FrameLayout
     lateinit var toast: Toast
 
     @SuppressLint("ClickableViewAccessibility", "ShowToast")
@@ -58,15 +58,15 @@ class CoreAccessibilityService : AccessibilityService() {
         })
 
         mLayout = FrameLayout(this)
-        mLayout!!.setOnTouchListener(onTouchHandler(mGestureTap))
+        mLayout.setOnTouchListener(onTouchHandler(mGestureTap))
 
         val lp = WindowManager.LayoutParams()
         lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
         lp.format = PixelFormat.TRANSLUCENT
         lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
-        lp.width = (getWidthOfWindowOrDisplay() * sharedPreferences!!.getInt("width", 40) / 100F).toInt()
+        lp.width = (getWidthOfWindowOrDisplay() * sharedPreferences.getInt("width", 40) / 100F).toInt()
         lp.height = statusBarHeight
-        when (sharedPreferences!!.getString("gravity", "top_start")) {
+        when (sharedPreferences.getString("gravity", "top_start")) {
             "top_start" -> lp.gravity = Gravity.TOP or Gravity.START
             "top_center" -> lp.gravity = Gravity.TOP or Gravity.CENTER
             "top_end" -> lp.gravity = Gravity.TOP or Gravity.END
@@ -77,7 +77,7 @@ class CoreAccessibilityService : AccessibilityService() {
 
         val wm = windowManager
         wm.addView(mLayout, lp)
-        if (sharedPreferences!!.getBoolean("disabled_when_fullscreen", true)) {
+        if (sharedPreferences.getBoolean("disabled_when_fullscreen", true)) {
             setupFollowStatusBarVisibilityListener(lp)
         }
 
@@ -103,7 +103,7 @@ class CoreAccessibilityService : AccessibilityService() {
                     }
                     "width" -> {
                         /* -1 means update width because of orientation changed */
-                        val width = payload.value.takeIf { it != -1 } ?: sharedPreferences!!.getInt("width", 40)
+                        val width = payload.value.takeIf { it != -1 } ?: sharedPreferences.getInt("width", 40)
                         lp.width = (getWidthOfWindowOrDisplay() * (width / 100F)).toInt()
                         wm.updateViewLayout(mLayout, lp)
                     }
@@ -188,7 +188,7 @@ class CoreAccessibilityService : AccessibilityService() {
     }
 
     private fun executeSwipeAction(direction: String) {
-        sharedPreferences!!.getString("action_type_$direction", null)
+        sharedPreferences.getString("action_type_$direction", null)
             .let {
                 if (it != null) {
                     val actionData = gson.fromJson(it, ActionData::class.java)
@@ -240,7 +240,6 @@ class CoreAccessibilityService : AccessibilityService() {
 
     private fun setupFollowStatusBarVisibilityListener(lp: WindowManager.LayoutParams) {
         val wm = windowManager
-        val mLayout = mLayout!!
 
         fun updateOverlayTouchable(touchable: Boolean): Boolean {
             val hasFlagNotTouchable = lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0
@@ -273,7 +272,6 @@ class CoreAccessibilityService : AccessibilityService() {
     }
 
     private fun removeFollowStatusBarVisibilityListener() {
-        val mLayout = mLayout!!
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             mLayout.setOnApplyWindowInsetsListener(null)
         } else {
@@ -320,8 +318,8 @@ private fun CoreAccessibilityService.muteStream(stream: Int = AudioManager.STREA
 }
 
 private fun CoreAccessibilityService.toggleKeepScreenOn() {
-    mLayout!!.keepScreenOn = !mLayout!!.keepScreenOn
-    toast.setText(if (mLayout!!.keepScreenOn) R.string.turn_on_keep_screen_on else R.string.turn_off_keep_screen_on)
+    mLayout.keepScreenOn = !mLayout.keepScreenOn
+    toast.setText(if (mLayout.keepScreenOn) R.string.turn_on_keep_screen_on else R.string.turn_off_keep_screen_on)
     toast.show()
 }
 
