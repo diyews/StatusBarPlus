@@ -10,10 +10,7 @@ import android.provider.Settings
 
 import android.provider.Settings.SettingNotFoundException
 import android.text.TextUtils.SimpleStringSplitter
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.RadioGroup
-import android.widget.SeekBar
+import android.widget.*
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 
@@ -42,13 +39,25 @@ class MainActivity : AppCompatActivity() {
             sharedPreferences.edit(true) {
                 putString("gravity", "top_start")
                 putInt("width", 40)
+                putBoolean("disabled_when_fullscreen", true)
             }
         }
     }
 
     private fun setupWidgetListeners() {
-        val checkBoxPreview = findViewById<CheckBox>(R.id.checkbox_preview)
+        val checkBoxPreview = findViewById<CheckBox>(R.id.checkBoxPreview)
         checkBoxPreview.setOnCheckedChangeListener { _, checked -> sendDataToService("preview", if (checked) 1 else 0) }
+
+        val checkBoxDisabledWhenFullscreen = findViewById<CheckBox>(R.id.checkBoxDisabledWhenFullscreen)
+        sharedPreferences.getBoolean("disabled_when_fullscreen", true).let {
+            checkBoxDisabledWhenFullscreen.isChecked = it
+        }
+        checkBoxDisabledWhenFullscreen.setOnCheckedChangeListener { _, checked ->
+            sharedPreferences.edit {
+                putBoolean("disabled_when_fullscreen", checked)
+            }
+            sendDataToService("disabled_when_fullscreen", if (checked) 1 else 0)
+        }
 
         val radioGroup = findViewById<RadioGroup>(R.id.radio_group)
         when (sharedPreferences.getString("gravity", "top_start")) {

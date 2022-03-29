@@ -76,7 +76,9 @@ class CoreAccessibilityService : AccessibilityService() {
 
         val wm = windowManager
         wm.addView(mLayout, lp)
-        setupFollowStatusBarVisibilityListener(lp)
+        if (sharedPreferences!!.getBoolean("disabled_when_fullscreen", true)) {
+            setupFollowStatusBarVisibilityListener(lp)
+        }
 
         /* listen data from activity or self to update status bar */
         dataFromActivityManager.subscribe(object : DataFromActivityListener {
@@ -103,6 +105,13 @@ class CoreAccessibilityService : AccessibilityService() {
                         val width = payload.value.takeIf { it != -1 } ?: sharedPreferences!!.getInt("width", 40)
                         lp.width = (getWidthOfWindowOrDisplay() * (width / 100F)).toInt()
                         wm.updateViewLayout(mLayout, lp)
+                    }
+                    "disabled_when_fullscreen" -> {
+                        if (payload.value == 1) {
+                            setupFollowStatusBarVisibilityListener(lp)
+                        } else {
+                            removeFollowStatusBarVisibilityListener()
+                        }
                     }
                 }
             }
@@ -260,12 +269,21 @@ class CoreAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun removeFollowStatusBarVisibilityListener() {
+        val mLayout = mLayout!!
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            mLayout.setOnApplyWindowInsetsListener(null)
+        } else {
+            mLayout.setOnSystemUiVisibilityChangeListener(null)
+        }
+    }
+
     companion object {
         val dataFromActivityManager = DataFromActivityManager()
     }
 }
 
-fun CoreAccessibilityService.updateVolumeByStep(upOrDownSign: Int = 1) {
+private fun CoreAccessibilityService.updateVolumeByStep(upOrDownSign: Int = 1) {
     (getSystemService(Context.AUDIO_SERVICE) as AudioManager)
         .apply {
             val currentVolume = getStreamVolume(AudioManager.STREAM_MUSIC)

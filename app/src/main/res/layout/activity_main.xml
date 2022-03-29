@@ -6,70 +6,93 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
+    <ScrollView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <Button
-            android:id="@+id/button_turn_on"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/turn_on_service" />
-
-        <CheckBox
-            android:id="@+id/checkbox_preview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/preview_status_bar" />
-
-        <RadioGroup
-            android:id="@+id/radio_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/radio_start"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/left" />
-
-            <RadioButton
-                android:id="@+id/radio_center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/center" />
-
-            <RadioButton
-                android:id="@+id/radio_end"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/right" />
-        </RadioGroup>
-
-        <SeekBar
-            android:id="@+id/seekBar"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content">
 
-        <androidx.gridlayout.widget.GridLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:columnCount="2"
-            app:rowCount="2">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-            <ws.diye.statusbarplus.ActionCardView app:actionType="left" />
-            <ws.diye.statusbarplus.ActionCardView app:actionType="right" />
-            <ws.diye.statusbarplus.ActionCardView app:actionType="left_bottom" />
-            <ws.diye.statusbarplus.ActionCardView app:actionType="right_bottom" />
+                <Button
+                    android:id="@+id/button_turn_on"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/turn_on_service" />
 
-        </androidx.gridlayout.widget.GridLayout>
-    </LinearLayout>
+                <CheckBox
+                    android:id="@+id/checkBoxPreview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/preview_status_bar" />
+
+                <CheckBox
+                    android:id="@+id/checkBoxDisabledWhenFullscreen"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/disabled_when_fullscreen" />
+
+                <RadioGroup
+                    android:id="@+id/radio_group"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/radio_start"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/left" />
+
+                    <RadioButton
+                        android:id="@+id/radio_center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/center" />
+
+                    <RadioButton
+                        android:id="@+id/radio_end"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/right" />
+                </RadioGroup>
+
+                <SeekBar
+                    android:id="@+id/seekBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <androidx.gridlayout.widget.GridLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:columnCount="2"
+                    app:rowCount="2">
+
+                    <ws.diye.statusbarplus.ActionCardView app:actionType="left" />
+
+                    <ws.diye.statusbarplus.ActionCardView app:actionType="right" />
+
+                    <ws.diye.statusbarplus.ActionCardView app:actionType="left_bottom" />
+
+                    <ws.diye.statusbarplus.ActionCardView app:actionType="right_bottom" />
+
+                </androidx.gridlayout.widget.GridLayout>
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -15,4 +15,5 @@
     <string name="swipe_left_bottom">Left-Bottom</string>
     <string name="swipe_right_bottom">Right-Bottom</string>
     <string name="search">Search</string>
+    <string name="disabled_when_fullscreen">Disabled when fullscreen</string>
 </resources>
