@@ -19,4 +19,6 @@
     <string name="volume_up">Volume Up</string>
     <string name="volume_down">Volume Down</string>
     <string name="muted">Muted</string>
+    <string name="turn_on_keep_screen_on">Turn on Keep Screen On</string>
+    <string name="turn_off_keep_screen_on">Turn off Keep Screen On</string>
 </resources>

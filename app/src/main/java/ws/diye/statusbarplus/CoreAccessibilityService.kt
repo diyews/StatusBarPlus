@@ -25,7 +25,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.preference.PreferenceManager
 import com.google.gson.Gson
 import java.lang.UnsupportedOperationException
-import kotlin.system.measureTimeMillis
 
 
 class CoreAccessibilityService : AccessibilityService() {
@@ -199,6 +198,7 @@ class CoreAccessibilityService : AccessibilityService() {
                                 CustomSwipeAction.VOLUME_UP -> updateVolumeByStep()
                                 CustomSwipeAction.VOLUME_DOWN -> updateVolumeByStep(-1)
                                 CustomSwipeAction.MUTE_MUSIC_STREAM -> muteStream()
+                                CustomSwipeAction.TOGGLE_KEEP_SCREEN_ON -> toggleKeepScreenOn()
                                 else -> performGlobalAction(actionData.actionValue)
                             }
                         }
@@ -316,6 +316,12 @@ private fun CoreAccessibilityService.muteStream(stream: Int = AudioManager.STREA
         }
 
     toast.setText(R.string.muted)
+    toast.show()
+}
+
+private fun CoreAccessibilityService.toggleKeepScreenOn() {
+    mLayout!!.keepScreenOn = !mLayout!!.keepScreenOn
+    toast.setText(if (mLayout!!.keepScreenOn) R.string.turn_on_keep_screen_on else R.string.turn_off_keep_screen_on)
     toast.show()
 }
 

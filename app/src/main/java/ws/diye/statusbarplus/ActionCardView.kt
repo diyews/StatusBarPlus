@@ -182,6 +182,7 @@ class ActionCardView(context: Context, attrs: AttributeSet): FrameLayout(context
                     "Volume Up" to CustomSwipeAction.VOLUME_UP,
                     "Volume Down" to CustomSwipeAction.VOLUME_DOWN,
                     "Mute Music" to CustomSwipeAction.MUTE_MUSIC_STREAM,
+                    "Keep Screen On" to CustomSwipeAction.TOGGLE_KEEP_SCREEN_ON,
                 )
             )
         }

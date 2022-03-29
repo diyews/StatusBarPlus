@@ -31,5 +31,6 @@ class CustomSwipeAction {
         const val VOLUME_UP = 100001
         const val VOLUME_DOWN = 100002
         const val MUTE_MUSIC_STREAM = 100003
+        const val TOGGLE_KEEP_SCREEN_ON = 100004
     }
 }
