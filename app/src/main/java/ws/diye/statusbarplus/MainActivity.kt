@@ -105,14 +105,13 @@ class MainActivity : AppCompatActivity() {
         val buttonTurnOn = findViewById<Button>(R.id.button_turn_on)
         if (isServiceOn) {
             buttonTurnOn.text = resources.getString(R.string.running)
-            buttonTurnOn.setOnClickListener(null)
         } else {
             buttonTurnOn.text = resources.getString(R.string.turn_on_service)
-            buttonTurnOn.setOnClickListener {
-                run {
-                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                    startActivity(intent)
-                }
+        }
+        buttonTurnOn.setOnClickListener {
+            run {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                startActivity(intent)
             }
         }
     }

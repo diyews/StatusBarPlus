@@ -25,3 +25,10 @@ data class ActionData(var type: ActionExecuteType = ActionExecuteType.NONE,
                       var packageId: String = "",
                       var lastModifiedTimeMs: Long = 0
 )
+
+class CustomSwipeAction {
+    companion object {
+        val VOLUME_UP = 100001
+        val VOLUME_DOWN = 100002
+    }
+}

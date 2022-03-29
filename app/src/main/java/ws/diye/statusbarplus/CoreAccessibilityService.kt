@@ -2,12 +2,14 @@ package ws.diye.statusbarplus
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.view.accessibility.AccessibilityEvent
 
 import android.graphics.PixelFormat
+import android.media.AudioManager
 import android.os.Build
 import android.util.DisplayMetrics
 import android.view.*
@@ -18,6 +20,7 @@ import android.view.MotionEvent
 
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.preference.PreferenceManager
 import com.google.gson.Gson
@@ -181,7 +184,11 @@ class CoreAccessibilityService : AccessibilityService() {
                     val actionData = gson.fromJson(it, ActionData::class.java)
                     when (actionData.type) {
                         ActionExecuteType.ACTION -> {
-                            performGlobalAction(actionData.actionValue)
+                            when (actionData.actionValue) {
+                                CustomSwipeAction.VOLUME_UP -> updateVolumeByStep()
+                                CustomSwipeAction.VOLUME_DOWN -> updateVolumeByStep(-1)
+                                else -> performGlobalAction(actionData.actionValue)
+                            }
                         }
                         ActionExecuteType.APP -> {
                             val intent =
@@ -256,6 +263,24 @@ class CoreAccessibilityService : AccessibilityService() {
     companion object {
         val dataFromActivityManager = DataFromActivityManager()
     }
+}
+
+fun CoreAccessibilityService.updateVolumeByStep(upOrDownSign: Int = 1) {
+    (getSystemService(Context.AUDIO_SERVICE) as AudioManager)
+        .apply {
+            val currentVolume = getStreamVolume(AudioManager.STREAM_MUSIC)
+            val maxVolume = getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val step =
+                (maxVolume / 20f)
+                    .let { if (it < 1) 1 else it }
+                    .toInt()
+            val target = currentVolume + step * upOrDownSign
+            if (target < 0 || target > maxVolume) return@apply
+
+            setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+            Toast.makeText(applicationContext, if (upOrDownSign == 1) "Volume Up" else "Volume Down", Toast.LENGTH_SHORT)
+                .show()
+        }
 }
 
 private class TouchGestureDetect(var x: Float = 0F, var y: Float = 0F) {

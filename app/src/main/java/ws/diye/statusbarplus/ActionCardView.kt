@@ -177,6 +177,12 @@ class ActionCardView(context: Context, attrs: AttributeSet): FrameLayout(context
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 put("Screenshot", AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT)
             }
+            putAll(
+                mapOf(
+                    "Volume Up" to CustomSwipeAction.VOLUME_UP,
+                    "Volume Down" to CustomSwipeAction.VOLUME_DOWN,
+                )
+            )
         }
     }
 }
