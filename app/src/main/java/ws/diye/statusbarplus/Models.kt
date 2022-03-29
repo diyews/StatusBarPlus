@@ -28,7 +28,8 @@ data class ActionData(var type: ActionExecuteType = ActionExecuteType.NONE,
 
 class CustomSwipeAction {
     companion object {
-        val VOLUME_UP = 100001
-        val VOLUME_DOWN = 100002
+        const val VOLUME_UP = 100001
+        const val VOLUME_DOWN = 100002
+        const val MUTE_MUSIC_STREAM = 100003
     }
 }

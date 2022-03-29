@@ -16,4 +16,7 @@
     <string name="swipe_right_bottom">Right-Bottom</string>
     <string name="search">Search</string>
     <string name="disabled_when_fullscreen">Disabled when fullscreen</string>
+    <string name="volume_up">Volume Up</string>
+    <string name="volume_down">Volume Down</string>
+    <string name="muted">Muted</string>
 </resources>

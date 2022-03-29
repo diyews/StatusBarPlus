@@ -34,11 +34,13 @@ class CoreAccessibilityService : AccessibilityService() {
     private lateinit var windowManager: WindowManager
     private var sharedPreferences: SharedPreferences? = null
     private val gson = Gson()
+    lateinit var toast: Toast
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "ShowToast")
     override fun onServiceConnected() {
         super.onServiceConnected()
 
+        toast = Toast.makeText(applicationContext, "", Toast.LENGTH_SHORT)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         var statusBarHeight = 0
@@ -196,6 +198,7 @@ class CoreAccessibilityService : AccessibilityService() {
                             when (actionData.actionValue) {
                                 CustomSwipeAction.VOLUME_UP -> updateVolumeByStep()
                                 CustomSwipeAction.VOLUME_DOWN -> updateVolumeByStep(-1)
+                                CustomSwipeAction.MUTE_MUSIC_STREAM -> muteStream()
                                 else -> performGlobalAction(actionData.actionValue)
                             }
                         }
@@ -296,9 +299,24 @@ private fun CoreAccessibilityService.updateVolumeByStep(upOrDownSign: Int = 1) {
             if (target < 0 || target > maxVolume) return@apply
 
             setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
-            Toast.makeText(applicationContext, if (upOrDownSign == 1) "Volume Up" else "Volume Down", Toast.LENGTH_SHORT)
-                .show()
+            val text = resources.getString(if (upOrDownSign == 1) R.string.volume_up else R.string.volume_down) + " ($target/$maxVolume)"
+            toast.setText(text)
+            toast.show()
         }
+}
+
+private fun CoreAccessibilityService.muteStream(stream: Int = AudioManager.STREAM_MUSIC) {
+    (getSystemService(Context.AUDIO_SERVICE) as AudioManager)
+        .apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+            } else {
+                setStreamMute(stream, true);
+            }
+        }
+
+    toast.setText(R.string.muted)
+    toast.show()
 }
 
 private class TouchGestureDetect(var x: Float = 0F, var y: Float = 0F) {
