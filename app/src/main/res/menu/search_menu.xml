@@ -2,8 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/app_bar_checkbox_all_apps"
+        android:title="@string/all_apps"
+        app:actionViewClass="android.widget.CheckBox"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
         android:id="@+id/app_bar_search"
-        android:icon="@drawable/ic_launcher_foreground"
         android:title="@string/search"
         app:showAsAction="ifRoom|withText"
         app:actionViewClass="androidx.appcompat.widget.SearchView"/>

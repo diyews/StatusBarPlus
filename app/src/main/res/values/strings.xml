@@ -5,7 +5,7 @@
     <string name="preview_status_bar">Preview</string>
     <string name="accessibility_service_label">Status Bar+ Service</string>
     <string name="accessibility_service_description">Status Bar+ Service\nUse service to create an overlay over status bar to detect touch gesture, then perform actions like lock screen</string>
-    <string name="total_installed_apps">Installed apps</string>
+    <string name="total_installed_apps">Installed apps %1$d</string>
     <string name="image_app_icon">App icon</string>
     <string name="left">Left</string>
     <string name="center">Center</string>
@@ -15,6 +15,7 @@
     <string name="swipe_left_bottom">Left-Bottom</string>
     <string name="swipe_right_bottom">Right-Bottom</string>
     <string name="search">Search</string>
+    <string name="all_apps">All apps</string>
     <string name="disabled_when_fullscreen">Disabled when fullscreen</string>
     <string name="volume_up">Volume Up</string>
     <string name="volume_down">Volume Down</string>

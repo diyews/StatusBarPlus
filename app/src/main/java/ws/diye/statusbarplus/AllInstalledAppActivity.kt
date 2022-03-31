@@ -13,6 +13,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.ApplicationInfo
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -20,10 +21,7 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
@@ -33,11 +31,11 @@ import kotlin.collections.ArrayList
 
 
 class AllInstalledAppActivity : AppCompatActivity() {
+    private val allAppsList: ArrayList<AppModel> = ArrayList()
+    private val appsToSearchList: ArrayList<AppModel> = ArrayList()
     private lateinit var recyclerView: RecyclerView
-    private lateinit var installedAppsList: ArrayList<AppModel>
     private lateinit var installedAppAdapter: AppAdapter
 
-    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_all_installed_app)
@@ -49,34 +47,39 @@ class AllInstalledAppActivity : AppCompatActivity() {
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
         loadingDialog.setCancelable(false)
-        installedAppsList = ArrayList()
         loadingDialog.show()
         Handler(Looper.getMainLooper()).postDelayed({
-            getInstalledApps()
+            getAllApps()
+            setAppsToSearch()
             loadingDialog.dismiss()
-            findViewById<TextView>(R.id.totalInstalledApp).text =
-                "${getString(R.string.total_installed_apps)} ${installedAppsList.size}"
-            installedAppAdapter = AppAdapter(this, installedAppsList)
-            recyclerView.adapter = installedAppAdapter
+            setRecyclerViewDataSet(appsToSearchList)
         }, 500)
 
     }
 
     @SuppressLint("QueryPermissionsNeeded")
-    private fun getInstalledApps(): ArrayList<AppModel> {
-        installedAppsList.clear()
+    private fun getAllApps(): ArrayList<AppModel> {
         val packs = packageManager.getInstalledPackages(0)
         for (i in packs.indices) {
             val p = packs[i]
-            if (!isSystemPackage(p)) {
+            val isSystem = isSystemPackage(p)
+            val checkFlagsPass: Boolean = (p.applicationInfo.flags and ApplicationInfo.FLAG_SUPPORTS_RTL != 0 && p.applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_CLEAR_USER_DATA != 0)
+                .let {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        it && p.applicationInfo.flags and ApplicationInfo.FLAG_EXTRACT_NATIVE_LIBS != 0
+                    } else {
+                        it
+                    }
+                }
+            if (!isSystem || checkFlagsPass) {
                 val appName = p.applicationInfo.loadLabel(packageManager).toString()
                 val icon = p.applicationInfo.loadIcon(packageManager)
                 val packages = p.applicationInfo.packageName
-                installedAppsList.add(AppModel(appName, icon, packages))
+                allAppsList.add(AppModel(appName, icon, packages, isSystem))
             }
         }
-        installedAppsList.sortBy { it.getName().capitalized() }
-        return installedAppsList
+        allAppsList.sortBy { it.name.capitalized() }
+        return allAppsList
     }
     private fun String.capitalized(): String {
         return this.replaceFirstChar {
@@ -85,15 +88,24 @@ class AllInstalledAppActivity : AppCompatActivity() {
             else it.toString()
         }
     }
+    private fun setAppsToSearch(show: Boolean = false) {
+        appsToSearchList.clear()
+        if (show) {
+            appsToSearchList.addAll(allAppsList)
+        } else {
+            appsToSearchList.addAll(
+                allAppsList.filter { !it.isSystemPackage })
+        }
+    }
     private fun isSystemPackage(pkgInfo: PackageInfo): Boolean {
         return pkgInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.search_menu, menu)
-        val search = menu.findItem(R.id.app_bar_search)
+        val checkBoxAllApps = menu.findItem(R.id.app_bar_checkbox_all_apps).actionView as CheckBox
+        val searchView = menu.findItem(R.id.app_bar_search).actionView as SearchView
 
-        val searchView = search.actionView as SearchView
         searchView.maxWidth = android.R.attr.width
         searchView.queryHint = "Search app name or package"
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -105,14 +117,14 @@ class AllInstalledAppActivity : AppCompatActivity() {
             override fun onQueryTextChange(newText: String?): Boolean {
                 val appModelArrayList: ArrayList<AppModel> = ArrayList()
 
-                for (i in installedAppsList) {
-                    if (i.getName().lowercase(Locale.getDefault()).contains(
+                for (i in appsToSearchList) {
+                    if (i.name.lowercase(Locale.getDefault()).contains(
                             newText!!.lowercase(
                                 Locale.getDefault()
                             )
                         )
                         ||
-                        i.getPackages().lowercase(Locale.getDefault()).contains(
+                        i.packages.lowercase(Locale.getDefault()).contains(
                             newText.lowercase(
                                 Locale.getDefault()
                             )
@@ -121,32 +133,42 @@ class AllInstalledAppActivity : AppCompatActivity() {
                         appModelArrayList.add(i)
                     }
                 }
-                installedAppAdapter =
-                    AppAdapter(this@AllInstalledAppActivity, appModelArrayList)
-
-                recyclerView.adapter = installedAppAdapter
-                installedAppAdapter.notifyDataSetChanged()
+                setRecyclerViewDataSet(appModelArrayList, needNotify = true)
                 return true
             }
         })
+        searchView.setOnSearchClickListener {
+            checkBoxAllApps.visibility = View.GONE
+        }
+        searchView.setOnCloseListener {
+            checkBoxAllApps.visibility = View.VISIBLE
+            false
+        }
+
+        checkBoxAllApps.setOnCheckedChangeListener { _, checked ->
+            setAppsToSearch(checked)
+            setRecyclerViewDataSet(appsToSearchList, needNotify = true)
+        }
 
         return super.onCreateOptionsMenu(menu)
     }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun setRecyclerViewDataSet(dataList: ArrayList<AppModel>, needNotify: Boolean = false) {
+        findViewById<TextView>(R.id.totalInstalledApp).text =
+            getString(R.string.total_installed_apps, dataList.size)
+
+        installedAppAdapter =
+            AppAdapter(this, dataList)
+
+        recyclerView.adapter = installedAppAdapter
+        if (needNotify) {
+            installedAppAdapter.notifyDataSetChanged()
+        }
+    }
 }
 
-private class AppModel(private var name:String, private var icon: Drawable, private var packages:String) {
-    fun getName(): String {
-        return name
-    }
-
-    fun getIcon(): Drawable {
-        return icon
-    }
-
-    fun getPackages(): String {
-        return packages
-    }
-}
+private data class AppModel(val name: String, val icon: Drawable, val packages: String, val isSystemPackage: Boolean)
 
 private class AppAdapter(private val context: AllInstalledAppActivity, private var appModelList: ArrayList<AppModel>) :
     RecyclerView.Adapter<AppAdapter.ViewHolder>() {
@@ -166,9 +188,9 @@ private class AppAdapter(private val context: AllInstalledAppActivity, private v
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.appNameTxt.text = appModelList[position].getName()
-        holder.appIcon.setImageDrawable(appModelList[position].getIcon())
-        holder.appPackageNameTxt.text = appModelList[position].getPackages()
+        holder.appNameTxt.text = appModelList[position].name
+        holder.appIcon.setImageDrawable(appModelList[position].icon)
+        holder.appPackageNameTxt.text = appModelList[position].packages
 
         holder.itemView.setOnClickListener {
             val dialogListTitle = arrayOf("Set to open", "App Info")
@@ -180,7 +202,7 @@ private class AppAdapter(private val context: AllInstalledAppActivity, private v
                     when (which) {
                         0 -> {
                             val intent =
-                                context.packageManager.getLaunchIntentForPackage(appModelList[position].getPackages())
+                                context.packageManager.getLaunchIntentForPackage(appModelList[position].packages)
                             if (intent != null) {
                                 context.intent.extras?.getString("action_type_preference_key")
                                     .also { preferenceKey ->
@@ -198,7 +220,7 @@ private class AppAdapter(private val context: AllInstalledAppActivity, private v
 
                                         actionData.apply {
                                             type = ActionExecuteType.APP
-                                            packageId = appModelList[position].getPackages()
+                                            packageId = appModelList[position].packages
                                             lastModifiedTimeMs = System.currentTimeMillis()
                                         }
 
@@ -216,7 +238,7 @@ private class AppAdapter(private val context: AllInstalledAppActivity, private v
                             val intent = Intent()
                             intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
                             intent.data =
-                                Uri.parse("package:${appModelList[position].getPackages()}")
+                                Uri.parse("package:${appModelList[position].packages}")
                             context.startActivity(intent)
                         }
                     }
