@@ -32,5 +32,7 @@ class CustomSwipeAction {
         const val VOLUME_DOWN = 100002
         const val MUTE_MUSIC_STREAM = 100003
         const val TOGGLE_KEEP_SCREEN_ON = 100004
+        const val WECHAT_SCAN = 100101
+        const val ALIPAY_SCAN = 100102
     }
 }

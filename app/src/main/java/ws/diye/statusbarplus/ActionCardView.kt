@@ -177,12 +177,17 @@ class ActionCardView(context: Context, attrs: AttributeSet): FrameLayout(context
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 put("Screenshot", AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT)
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                put("Headset Hook", AccessibilityService.GLOBAL_ACTION_KEYCODE_HEADSETHOOK)
+            }
             putAll(
                 mapOf(
                     "Volume Up" to CustomSwipeAction.VOLUME_UP,
                     "Volume Down" to CustomSwipeAction.VOLUME_DOWN,
                     "Mute Music" to CustomSwipeAction.MUTE_MUSIC_STREAM,
                     "Keep Screen On" to CustomSwipeAction.TOGGLE_KEEP_SCREEN_ON,
+                    "Wechat Scan" to CustomSwipeAction.WECHAT_SCAN,
+                    "Alipay Scan" to CustomSwipeAction.ALIPAY_SCAN,
                 )
             )
         }

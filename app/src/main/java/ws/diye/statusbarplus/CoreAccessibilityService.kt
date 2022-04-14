@@ -3,6 +3,7 @@ package ws.diye.statusbarplus
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
@@ -10,6 +11,7 @@ import android.view.accessibility.AccessibilityEvent
 
 import android.graphics.PixelFormat
 import android.media.AudioManager
+import android.net.Uri
 import android.os.Build
 import android.util.DisplayMetrics
 import android.view.*
@@ -199,6 +201,8 @@ class CoreAccessibilityService : AccessibilityService() {
                                 CustomSwipeAction.VOLUME_DOWN -> updateVolumeByStep(-1)
                                 CustomSwipeAction.MUTE_MUSIC_STREAM -> muteStream()
                                 CustomSwipeAction.TOGGLE_KEEP_SCREEN_ON -> toggleKeepScreenOn()
+                                CustomSwipeAction.WECHAT_SCAN -> wechatScan()
+                                CustomSwipeAction.ALIPAY_SCAN -> alipayScan()
                                 else -> performGlobalAction(actionData.actionValue)
                             }
                         }
@@ -321,6 +325,21 @@ private fun CoreAccessibilityService.toggleKeepScreenOn() {
     mLayout.keepScreenOn = !mLayout.keepScreenOn
     toast.setText(if (mLayout.keepScreenOn) R.string.turn_on_keep_screen_on else R.string.turn_off_keep_screen_on)
     toast.show()
+}
+
+private fun CoreAccessibilityService.wechatScan() {
+    val itx = applicationContext.packageManager.getLaunchIntentForPackage("com.tencent.mm")
+    if (itx != null) {
+        itx.putExtra("LauncherUI.From.Scaner.Shortcut", true)
+        applicationContext.startActivity(itx)
+    }
+}
+
+private fun CoreAccessibilityService.alipayScan() {
+    val uri = Uri.parse("alipayqr://platformapi/startapp?saId=10000007")
+    val intent = Intent(Intent.ACTION_VIEW, uri)
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    applicationContext.startActivity(intent)
 }
 
 private class TouchGestureDetect(var x: Float = 0F, var y: Float = 0F) {
